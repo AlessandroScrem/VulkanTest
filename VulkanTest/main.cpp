@@ -88,6 +88,7 @@ private:
     VkFormat swapChainImageFormat;
     VkExtent2D swapChainExtent{};
     std::vector<VkImageView> swapChainImageViews;
+    std::vector<VkFramebuffer> swapChainFramebuffers;
 
     VkRenderPass renderPass;
     VkPipelineLayout pipelineLayout;
@@ -113,6 +114,7 @@ private:
         createImageViews();
         createRenderPass();
         createGraphicsPipeline();
+        createFrameBuffers();
 
     }
 
@@ -123,10 +125,12 @@ private:
     }
 
     void cleanup() {
+        for (const auto& framebuffer : swapChainFramebuffers) {
+            vkDestroyFramebuffer(device, framebuffer, nullptr);
+        }
+
         vkDestroyPipeline(device, graphicsPipeline, nullptr);
-
         vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
-
         vkDestroyRenderPass(device, renderPass, nullptr);
 
         for (const auto& imageView : swapChainImageViews) {
@@ -134,7 +138,6 @@ private:
         }
 
         vkDestroySwapchainKHR(device, swapChain, nullptr);
-
         vkDestroyDevice(device, nullptr);
 
         if (enableValidationLayers) {
@@ -142,7 +145,6 @@ private:
         }
 
         vkDestroySurfaceKHR(instance, surface, nullptr);
-
         vkDestroyInstance(instance, nullptr);
 
         glfwDestroyWindow(window);
@@ -687,6 +689,27 @@ private:
             throw std::runtime_error("failed to create render pass!");
         }
 
+    }
+
+    void createFrameBuffers() {
+        swapChainFramebuffers.resize(swapChainImageViews.size());
+
+        for (size_t i = 0; i < swapChainImageViews.size(); i++) {
+            VkImageView attachments[] = { swapChainImageViews[i] };
+
+            VkFramebufferCreateInfo framebufferInfo{};
+            framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+            framebufferInfo.renderPass = renderPass;
+            framebufferInfo.attachmentCount = 1;
+            framebufferInfo.pAttachments = attachments;
+            framebufferInfo.width = swapChainExtent.width;
+            framebufferInfo.height = swapChainExtent.height;
+            framebufferInfo.layers = 1;
+
+            if (vkCreateFramebuffer(device, &framebufferInfo, nullptr, &swapChainFramebuffers[i]) != VK_SUCCESS) {
+                throw std::runtime_error("failed to create framebubber!");
+            }
+        }
     }
 
     static std::vector<char> readFile(const std::string& filename) {
