@@ -94,6 +94,8 @@ private:
     VkPipelineLayout pipelineLayout;
     VkPipeline graphicsPipeline;
 
+    VkCommandPool commandPool;
+
 
     void initWindow() {
         glfwInit();
@@ -115,6 +117,7 @@ private:
         createRenderPass();
         createGraphicsPipeline();
         createFrameBuffers();
+        createCommandPool();
 
     }
 
@@ -125,6 +128,8 @@ private:
     }
 
     void cleanup() {
+        vkDestroyCommandPool(device, commandPool, nullptr);
+
         for (const auto& framebuffer : swapChainFramebuffers) {
             vkDestroyFramebuffer(device, framebuffer, nullptr);
         }
@@ -154,8 +159,6 @@ private:
 
 
     void createInstance() {
-
-
         if (enableValidationLayers && !checkValidationLayerSupport()) {
             throw std::runtime_error("validation layers requested, but not available!");
         }
@@ -709,6 +712,19 @@ private:
             if (vkCreateFramebuffer(device, &framebufferInfo, nullptr, &swapChainFramebuffers[i]) != VK_SUCCESS) {
                 throw std::runtime_error("failed to create framebubber!");
             }
+        }
+    }
+
+    void createCommandPool() {
+        QueueFamilyIndices queueFamiliIndices = findQueueFamilies(physicalDevice);
+
+        VkCommandPoolCreateInfo poolinfo{};
+        poolinfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+        poolinfo.queueFamilyIndex = queueFamiliIndices.graphicsFamily.value();
+        poolinfo.flags = 0; //Optional
+
+        if (vkCreateCommandPool(device, &poolinfo, nullptr, &commandPool) != VK_SUCCESS) {
+            throw std::runtime_error("failed to create command pool!");
         }
     }
 
