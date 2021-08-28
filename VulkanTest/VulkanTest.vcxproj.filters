@@ -23,4 +23,7 @@
     <None Include="shaders\shader.vert" />
     <None Include="shaders\shader.frag" />
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="readme.md" />
+  </ItemGroup>
 </Project>
